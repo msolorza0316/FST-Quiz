@@ -1,0 +1,730 @@
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/10.1.0/nouislider.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/10.1.0/nouislider.min.css" rel="stylesheet">
+
+<script type="text/javascript"> 
+function getQueryVariable(variable) {
+    var query = window.location.search.substring(1);
+    var vars = query.split("&");
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split("=");
+        if (pair[0] == variable) { return pair[1]; }
+    }
+    return ("");
+}
+
+var sr22 = getQueryVariable("sr22");
+var zipcode = getQueryVariable("zip");
+var deviceType
+if ( window.matchMedia("only screen and (max-width: 600px)").matches) {
+      deviceType= 2
+} else {
+      deviceType= 1
+}
+
+var city, state
+
+function getResults_MA() {
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+
+  var raw = JSON.stringify({
+    "api_token":"7KhmQJT4DqkoRL-CVbTQpCARp2kjTDyG",
+    "data":{
+    "zip":"11223",
+    "coverage_amount":"500000",
+    },
+    "ip": "1.2.3.4",
+    "local_hour":12,
+    "placement_id":"pMqUfB4MplHq3SxFYT_7YKwed0hWJA",
+    "sub_1":"test sub id",
+    "ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.44 Safari/537.36",
+    "url":"http://www.finder.com/life-insurance-engine",
+    "version":17
+  });
+
+  var requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
+
+  var maEndpoint = "https://cors-anywhere.herokuapp.com/https://insurance-test.mediaalpha.com/backfill.json";
+
+  var maData = fetch("https://cors-anywhere.herokuapp.com/https://insurance-test.mediaalpha.com/backfill.json", requestOptions)
+  .then(
+      function(response) {
+        if (response.status !== 200) {
+          console.log('Looks like there was a problem. Status Code: ' +
+            response.status);
+          return;
+        }
+
+        // Examine the text in the response
+        response.json().then(function(data) {
+          console.log(data);
+        });
+      }
+    )
+    .catch(function(err) {
+      console.log('Error:', err);
+    });
+}
+
+function updateResults() {
+  document.getElementById('loader').style.display = "block";
+
+  bypassLazyLoad()
+
+try {        
+document.getElementById('engine-phone-number').style.display = "none"
+} catch(err) {
+}
+
+  document.getElementById('sub-header').style.display = "none"
+  document.getElementById('sub-header').style.opacity = "0"
+
+  setTimeout(function() {
+    document.getElementById('main-header').style.opacity = "0"
+    document.getElementById('loader').style.opacity = "0";
+
+    setTimeout(function() {
+      document.getElementById('loader').style.display = "none";
+      document.getElementById('sub-header').style.display = "block"
+
+      document.getElementById('main-header').style.textAlign = "center"
+      document.getElementById('sub-header').style.textAlign = "center"
+
+      document.getElementById('main-header').style.opacity = "1"
+      document.getElementById('sub-header').style.opacity = "1"
+                       
+try {                        document.getElementById('engine-phone-number').style.textAlign = "center"
+                        document.getElementById('engine-phone-number').style.display = "block"
+} catch(err) {
+}
+
+      var newHeader = "The best life insurance companies for you"
+      
+      if (state != undefined) {
+        newHeader += " living in " + city + ", " + state
+      }
+      newHeader += "."
+
+      document.getElementById('main-header').innerHTML = newHeader
+      document.getElementById('sub-header').innerHTML = "Compare quotes from at least 2 to 3 of these top companies to save up to 40% on your life insurance."
+
+      document.getElementById("engine-product-listings").style.display = "block";
+      document.getElementById("engine-product-listings").style.opacity = "1";
+    }, 500)   
+  }, 600) 
+
+    //var homeowner = answeredResults["homeowner"]
+    //var age = answeredResults["age"]
+    //var insured = answeredResults["insured"]
+
+    //var maResults = getResults_MA()
+
+    var listings = document.getElementById('engine-product-listings')
+
+    function filterPartners() {
+        let partnerNumAdj = 0
+        // Need to save because of the splice
+        let partnerLength = partners.length 
+
+        for (partnerNum = 0; partnerNum < partnerLength; partnerNum++) { 
+          // We need an adjusted number because of the splice changing the order of the array
+          let adjNum = partnerNum - partnerNumAdj
+          let isFilterMatch = false
+
+          if (partners[ adjNum ].filters != null) {
+            for (filterNum = 0; filterNum < partners[ adjNum ].filters.length; filterNum++) {// Filter through filter list
+              for (filterAns = 0; filterAns < partners[ adjNum ].filters[filterNum].length; filterAns++) { // Filter through exact filter
+                
+                if (partners[ adjNum ].filters[filterNum][filterAns] == answeredResults[ questions[filterNum]["name"] ] ) {
+                  isFilterMatch = true
+                  break;
+                }
+              }
+            }
+          }
+
+          if (partners[ adjNum ].geoFilters != null && state != null) {
+            console.log( partners[adjNum].name)
+            for (filterNum = 0; filterNum < partners[ adjNum ].geoFilters.length; filterNum++) {
+              let stateName = state.toLowerCase()
+              let filteredState = partners[ adjNum].geoFilters[ filterNum ].toLowerCase()
+
+              if (stateName == filteredState ) {
+                  isFilterMatch = true
+                  break;
+                }
+            }
+          }
+
+          // If match, exclude
+          if (isFilterMatch) {
+            partnerNumAdj++;
+            partners.splice(adjNum, 1)
+          }
+        }
+      }
+
+    filterPartners()
+
+    var currentListings = 0
+    var totalListings = 4
+
+    //Add listing partners here if necessary - currenty only table listings
+
+    for (a = 0; a < totalListings; a++) {
+      if ( partners[0] != null && currentListings < totalListings) {
+        currentListings++;
+
+        productListing = document.getElementById( partners[0].id ).innerHTML
+        listings.innerHTML += productListing
+
+        if (partners[0].exclusive == 1) {
+          totalListings = 1;
+        }
+
+        partners.shift()
+      } else {
+        break;
+      }
+    }
+
+
+  /*var endpoint = 'https://api.transparent.ly/search/blue/green?vertical=1&pubcampaignid=6043&no_tracking=true&loanType=1&zipCode=' + zipcode + '&devicetype=' + deviceType + '&homeowner=' + homeowner + '&currentlyinsured=' + insured + '&age=' + age 
+
+  $.getJSON(endpoint , function(data) {
+      var listings = document.getElementById('engine-product-listings')
+
+      var partnerData = {}
+
+      for (var results= 0; results < Math.min(3,data.result.length); results++) { // Loop through API data
+           partnerData[results] = {}
+
+           var dataValue = data.result[results]        
+
+           for (key in dataValue) {
+               partnerData[results][key] = dataValue[key]
+           }
+      }
+
+      // Filter out partners based on answers
+      function filterPartners() {
+        for (var partnerNum = 0; partnerNum < partners.length; partnerNum++) { 
+          if (partners[ partnerNum ].filters != null) {
+            console.log(partners[ partnerNum ]["name"])
+
+            let isFilterMatch = false
+
+            for (filterNum = 0; filterNum < partners[ partnerNum ].filters.length; filterNum++) {// Filter through filter list
+              for (filterAns = 0; filterAns < partners[ partnerNum ].filters[filterNum].length; filterAns++) { // Filter through exact filter
+                
+                if (partners[ partnerNum ].filters[filterNum][filterAns] == answeredResults[ questions[filterNum]["name"] ] ) {
+                  isFilterMatch = true
+
+                  break;  
+                }
+              }
+            }
+
+            // If match, exclude
+            if (isFilterMatch) {
+                             console.log("match")
+              partners.splice(partnerNum, 1)
+            }
+          }
+        }
+      }
+
+      filterPartners()
+
+      if (Object.keys(partnerData).length > 0) {
+        for (var results = 0; results < Object.keys(partnerData).length; results++) { // Print API data
+          var dataValue = partnerData[results]
+          var productListing
+
+          // Use our own partnership if our deal is better
+          if (partners[0] != undefined && dataValue["publisherRevenue"] < partners[0]["num"]) {     
+            productListing = document.getElementById( partners[0].id ).innerHTML
+            partners.shift()
+          } else {
+            var productDescription = "<ul class='list-1'>"
+            for (a=0; a<Math.min(dataValue["bulletedDescription"].length,3); a++) {
+              if (dataValue["bulletedDescription"][a] != "") {
+                productDescription += "<li>" + dataValue["bulletedDescription"][a] + "</span></li>"
+              } 
+            }
+            productDescription = productDescription + "</ul>"
+            var url = 'listingSelected("https:' + dataValue["clickUrl"] + '")'
+
+            productListing = "<div class='engine-product-listing luna-card luna-card--border' onclick='" + url + "'>" +
+            "<div class='u-grid u-grid--alignMiddle'><div class='u-grid__col u-1/4@m' style='text-align:center'>" +
+            "<img src='" + dataValue["logoUrl"] + "' class='engine-product-listing-image'/>" +
+            "</div>" +
+            "<div class='u-grid__col u-1/2@m'>" +
+            "<h3>" + dataValue["title"] + "</h3>" +
+            productDescription + 
+            "</div>" +
+            "<div class='u-grid__col u-1/4@m' style='text-align: center'>" +
+            "<div class='luna-button luna-button--primary engine-product-listing-button luna-button--large'>View my quote</div>" +
+            "<span style='font-size:.9em; margin-top:5px'>on " + dataValue["brandName"] + "'s secure site</span>" +
+            "</div>"
+
+            if (dataValue["brandName"] == "Progressive" && partners[0]["name"] == "Progressive") {
+              partners.shift()
+            } 
+          }
+
+          listings.innerHTML += productListing
+        } 
+    }
+    else {
+        for (var results = 0; results < partners.length; results++) { // Print API data
+          productListing = document.getElementById( partners[0].id ).innerHTML
+          partners.shift()
+
+          listings.innerHTML += productListing
+        }
+    }
+  }
+  );*/
+}
+
+function bypassLazyLoad() {
+  var customProductListings = document.getElementsByClassName("engine-product-listing-image")
+
+  for (var a = 0; a < customProductListings.length; a++) {
+        var imageSrc = customProductListings[a].getAttribute("data-src")
+        customProductListings[a].src = imageSrc 
+  }
+}
+
+function updatePage() {
+  if (zipcode != "") {
+    var endpoint = "https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyBghuwd0spM5SHvVAvQGct9DdIbcXIMlAo&address=" + zipcode
+
+    $.getJSON(endpoint).success(function(response){
+        //find the city and state
+        var address_components = response.results[0].address_components;
+        $.each(address_components, function(index, component){
+          var types = component.types;
+          $.each(types, function(index, type){
+            if(type == 'political' & city == undefined) {
+              city = component.long_name;
+            }
+            if(type == 'administrative_area_level_1') {
+              state = component.short_name;
+            }
+          });
+        });
+
+        document.getElementById('main-header').innerHTML = "Finding the best cheap life insurance rates for you in " + city + "."
+      });
+  }
+}
+
+function listingSelected(url) {
+  ga('send', {
+      hitType: 'event',
+      eventCategory: 'test',
+      eventAction: "Converted",
+      eventLabel: url,
+    });
+
+  window.open(url)
+}
+
+function tableListingSelected(url) {
+  ga('send', {
+      hitType: 'event',
+      eventCategory: 'test',
+      eventAction: "Converted - Table",
+      eventLabel: url,
+    });
+
+  window.open(url)
+}
+
+function phoneCallSelected(url) {
+  ga('send', {
+      hitType: 'event',
+      eventCategory: 'test',
+      eventAction: "Converted - Phone",
+      eventLabel: url,
+    })
+}
+
+updatePage()
+
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style>
+.footer {
+display: none;
+}
+
+.header-navbar__features {
+display: none;
+}
+
+.mAdGoBtnText {
+color: #fff !important;
+text-decoration: none;
+}
+
+#max-partners table td {
+vertical-align: top !important;
+}
+
+.top-sub-header { 
+ font-size:22px !important;
+ color: #505050;
+}
+
+@media(max-width: 600px) {
+.max-ad-images {
+text-align:center;
+}
+
+#max-partners table td {
+display:block;
+margin: 0 auto;
+}
+
+.top-sub-header{
+ margin-top:15px !important;
+}
+
+.media-alpha-wrapper {
+margin-top:15px !important;
+}
+
+.engine-phone-number {
+ text-align: center;
+}
+
+.partnered-list {
+ 
+}
+}
+</style>
+
+<style>
+.loader {
+    border: 9px dotted #1591fe;
+    border-top: 9px solid #1591fe;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s ease-in-out infinite;
+    margin: 60px auto;
+   display: none;
+}
+
+.t_table {
+border: 0 !important;
+}
+
+.tablesorter-headerRow {
+display: none;
+}
+</style>
+
+
+
+<style>
+.custom-width {
+max-width:60rem;
+}
+
+.header-sitewide__search {
+display: none;
+}
+
+#respond {
+display:none;
+}
+
+.well {
+display:none !important;
+}
+
+.media-alpha-wrapper {
+text-align:center;
+margin-top: 30px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#new-filter {
+display: none !important;
+}
+
+.load-media-alpha {
+margin-top:30px;
+margin-bottom: 20px;
+display: none;
+}
+
+
+}
+</style>
+
+<style>
+[role=navigation] {
+display: none !important;
+}
+
+.custom-width {
+max-width:60rem;
+margin: 0 auto;
+}
+
+.authorBox {
+display: none;
+}
+</style>
+
+<style>
+.main-header {
+   color: #fff;
+   text-align: center;
+   font-weight: 200;
+   padding-top: 1.5em;
+   transition: opacity 0.5s ease-out;
+  -moz-transition: opacity 0.5s ease-out; 
+    -o-transition: opacity 0.5s ease-out; 
+    -webkit-transition: opacity 0.5s ease-out; 
+    -ms-transition: opacity 0.5s ease-out;
+}
+
+.sub-header {
+   font-size: 1.1em;
+   margin-bottom: 1.8em;
+   font-weight: 100;
+   transition: opacity 0.5s ease-out;
+  -moz-transition: opacity 0.5s ease-out; 
+    -o-transition: opacity 0.5s ease-out; 
+    -webkit-transition: opacity 0.5s ease-out; 
+    -ms-transition: opacity 0.5s ease-out;
+  color: #fff;
+   text-align: center;
+}
+
+@media (min-width: 799px) {
+.form-body {
+min-height: 500px;
+}
+}
+
+.question-field {
+  padding-bottom: 10px;
+  transition: all 0.2s ease-out;
+  -moz-transition: all 0.2s ease-out; 
+      -o-transition: all 0.2s ease-out;  
+      -webkit-transition: all 0.2s ease-out;
+}
+
+.question-title {
+  font-weight: 100;
+  color: #fff;
+  font-size: 2.5rem;
+  text-align: center;
+/*  margin-top: 5rem !important;*/
+}
+
+.engine-product-listing {
+  padding: 25px;
+}
+
+
+
+.engine-product-listing:hover {
+  cursor: pointer
+}
+.engine-product-listing-image {
+
+}
+.engine-product-listing-button{
+  width: 100%;
+  margin-top: 10px;
+}
+</style>
+
+<style>
+#answer-items {
+list-style-type: none;
+margin-left: 0;
+border-spacing: .4em;
+}
+
+#answer-items li {
+padding: 12px 20px;
+min-width: 45px;
+cursor: pointer;
+text-align: center;
+color: #fff;
+border: 1px solid #fff;
+margin-bottom: .5em;
+}
+
+@media(min-width: 601px) {
+#answer-items {
+ display: table;
+  margin: 0 auto;
+}
+
+#answer-items li {
+display: table-cell;
+}
+
+#answer-items li:hover {
+color: #1f48b9;
+border: 1px solid;
+background: #fff;
+}
+
+.question-field {
+  padding-left:10px;
+}
+}
+
+.engine-product-listings {
+  opacity: 0;
+display:none;
+transition: opacity 0.5s ease-out;
+  -moz-transition: opacity 0.5s ease-out; 
+    -o-transition: opacity 0.5s ease-out; 
+    -webkit-transition: opacity 0.5s ease-out; 
+    -ms-transition: opacity 0.5s ease-out;
+}
+.engine-product-listing:hover {
+border: 1px solid #1591fe;
+outline: 1px solid #1591fe;
+transition: all .2s;
+}
+</style>
+
+<style>
+.noUi-connect {
+background: #fff;
+border-radius: 30px;
+}
+.noUi-target {
+border-radius: 30px;
+}
+
+.noUi-horizontal {
+height: 26px;
+}
+
+.noUi-handle {
+height: 34px !important;
+}
+
+.noUi-handle:after, .noUi-handle:before {
+height: 20px;
+}
+
+.noUi-base {
+ background: #2152c3; 
+ border-radius: 30px;
+}
+</style>
+
+<style>
+body {
+}
+
+.sliderText {
+margin-top: 2rem;
+ margin-bottom: 1rem;
+ text-align: center;
+ font-size: 3rem;
+ color: #fff;
+}
+
+.engine-wrap {
+background: linear-gradient(135deg, #165deb 10%, #276ddf 37%, #1c3eae 90%);
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+padding: 1rem 1rem 4rem;
+padding-bottom: 300px;
+}
+
+@media (max-width: 600px) {
+.engine-wrap {
+  margin: -.5rem;
+}
+}
+
+/*.continueButton {
+ border: 1px solid #fff;
+ text-align: center;
+ color: #fff;
+ padding: 9px;
+ max-width: 400px;
+ margin: 0 auto;
+ border-radius: 30px;
+ margin-top: 30px;
+}
+
+.continueButton:hover {
+cursor: pointer;
+background: #fff;
+color: #1f48b9;
+}
+*/
+
+li{
+ background-color:white;
+ color: #0677da !important;
+ border-radius : 30px;
+ font-weight: bold;
+}
+
+.luna-toggle__input:checked+.luna-toggle__label::after{
+background: #038500;
+}
+
+.luna-toggle__input:checked+.luna-toggle__label{
+background: #81d068;
+}
+
+.luna-toggle__text{
+color: white;
+text-size: 1.2em;
+font-weight: bold;
+}
+
+.luna-button--ghost {
+    background: white;
+ border-radius : 30px;
+
+}
+
+
+</style>
